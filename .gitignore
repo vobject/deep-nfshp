@@ -99,3 +99,19 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# PyCharm
+.idea/
+
+# training data
+data/
+
+# saved models
+*.h5
+
+# tensorboard log directory
+log/
+logs/
+
+# Windows Shortcut
+*.lnk
