@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', dest='model',   type=str, help='trained model file')
     args = parser.parse_args()
-    
+
     model = keras.models.load_model(args.model)
 
     MAX_VJOY = 32767
@@ -28,15 +28,15 @@ def main():
     while True:
         # accelerate permanently
         j.set_button(13, 1)
-        
+
         screen = grab_screen(wnd_title=utils.WINDOW_TITLE,
                              dst_size=utils.CAPTURE_SIZE,
                              src_offset=utils.WINDOW_OFFSETS)
         screen_mod = utils.preprocess(screen)
-        
+
         # predict the steering angle for the current image
         steering_angle = float(model.predict(np.array([screen_mod]), batch_size=1))
-        
+
         # translate to vjoy axis value
         j_steering = np.interp(steering_angle, [-.5, +.5], [0, MAX_VJOY])
         print('{} angle={}'.format('LEFT' if steering_angle < 0 else 'RIGHT', steering_angle))
@@ -53,4 +53,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()     
+    main()

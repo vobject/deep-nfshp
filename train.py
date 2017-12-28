@@ -24,13 +24,13 @@ def training_generator(image_paths, steering_angles, batch_size):
             index = np.random.choice(len(image_paths))
             image = cv2.imread(image_paths[index])
             steering_angle = steering_angles[index]
-            
+
             image = utils.preprocess(image)
 
             # add the image and steering angle to the batch
             images[i] = image
             steers[i] = steering_angle
-            
+
             # add flipped the image and steering angle to the batch
             images[i+1] = cv2.flip(image, 1)
             steers[i+1] = -steering_angle
@@ -63,10 +63,10 @@ def read_datapoint(path):
     elems = fname.split("_")
     if len(elems) != 3:
         raise Exception('Invalid data set: ' + path)
-    
+
     # return id, timestamp, steering value
     return int(elems[0]), int(elems[1]), float(elems[2])
-        
+
 
 def load_data(data_dir, test_size):
     """
@@ -74,7 +74,7 @@ def load_data(data_dir, test_size):
     """
     X = []
     y = []
-    
+
     sub_dirs = os.listdir(data_dir)
     for sub_dir in sub_dirs:
         sub_dir_path = os.path.join(data_dir, sub_dir)
@@ -84,7 +84,7 @@ def load_data(data_dir, test_size):
             _, _, steering = read_datapoint(img_path)
             X.append(img_path)
             y.append(steering)
-    
+
     return sklearn.model_selection.train_test_split(X, y, test_size=test_size, random_state=0)
 
 
@@ -115,7 +115,7 @@ def train_model(model, epochs, batch_size, X_train, X_valid, y_train, y_valid):
     Train the model.
     """
     logging = keras.callbacks.TensorBoard(log_dir='logs')
-    
+
     checkpoint = keras.callbacks.ModelCheckpoint('model-{epoch:03d}.h5',
                                                  monitor='val_loss',
                                                  verbose=0,
@@ -132,7 +132,7 @@ def train_model(model, epochs, batch_size, X_train, X_valid, y_train, y_valid):
                         validation_steps=len(X_valid),
                         callbacks=[logging, checkpoint],
                         verbose=1)
-    
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -141,7 +141,7 @@ def main():
     parser.add_argument('-n', dest='epochs',     type=int,   default=10,     help='number of epochs')
     parser.add_argument('-b', dest='batch_size', type=int,   default=40,     help='batch size')
     args = parser.parse_args()
-    
+
     print('{} start'.format(datetime.datetime.now()))
     data = load_data(args.data_dir, args.test_size)
     model = build_model()

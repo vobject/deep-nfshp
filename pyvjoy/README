@@ -1,6 +1,6 @@
 pyvjoy is a set of Python bindings for vJoy (vjoystick.sourceforge.net)
 
-With this library you can easily set Axis and Button values on any vJoy device.  
+With this library you can easily set Axis and Button values on any vJoy device.
 Low-level bindings are provided in pyvjoy._sdk as well as a (hopefully) slightly more 'Pythonic' API in the pyvjoy.VJoyDevice() object.
 
 Currently vJoyInterface.dll is looked for inside the pyvjoy directory only so place the desired version of that file there to use.
@@ -45,7 +45,7 @@ j.data
 
 
 j.data.lButtons = 19 # buttons number 1,2 and 5 (1+2+16)
-j.data.wAxisX = 0x2000 
+j.data.wAxisX = 0x2000
 j.data.wAxisY= 0x7500
 
 #send data to vJoy device

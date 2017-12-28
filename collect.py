@@ -53,7 +53,7 @@ def create_joystick(index, on_accelerate, on_steer):
         # Left thumb stick is for steering
         if axis == 'l_thumb_x':
             on_steer(value)
-            
+
     return j
 
 
@@ -61,7 +61,7 @@ class InputHandler:
     record_dir = None
     image = None
     image_id = 0
-    
+
     @staticmethod
     def on_accelerate(active):
         # Recording is active as long as the user accelerates. Create a new
@@ -74,7 +74,7 @@ class InputHandler:
         if InputHandler.record_dir:
             write_datapoint(InputHandler.record_dir, InputHandler.image_id, InputHandler.image, value)
             InputHandler.image_id += 1
-            
+
 
 def main():
     j = create_joystick(0, InputHandler.on_accelerate, InputHandler.on_steer)
@@ -83,7 +83,7 @@ def main():
         screen = grab_screen(wnd_title=utils.WINDOW_TITLE,
                              dst_size=utils.CAPTURE_SIZE,
                              src_offset=utils.WINDOW_OFFSETS)
-        
+
         InputHandler.image = screen
         j.dispatch_events()
 
