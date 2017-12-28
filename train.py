@@ -2,11 +2,13 @@ import os
 import argparse
 import datetime
 
-import cv2
 import keras.models
 import keras.layers
 import keras.callbacks
 import keras.optimizers
+from keras.preprocessing.image import ImageDataGenerator
+
+import cv2
 import numpy as np
 import sklearn.model_selection
 
@@ -17,41 +19,66 @@ def training_generator(image_paths, steering_angles, batch_size):
     """
     Generate training data.
     """
-    images = np.empty([batch_size, utils.IMAGE_HEIGHT, utils.IMAGE_WIDTH, utils.IMAGE_CHANNELS])
-    steers = np.empty(batch_size)
+    fourth_batch_size = batch_size // 4
+    slices_per_epoch = len(image_paths) // batch_size
+    datagen = ImageDataGenerator(
+        rotation_range=10,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        shear_range=0.1,
+        zoom_range=0.1,
+        channel_shift_range=.1,
+        fill_mode='nearest')
+
+    training_data_slice = 0
     while True:
-        for i in range(0, batch_size, 2):
-            index = np.random.choice(len(image_paths))
-            image = cv2.imread(image_paths[index])
-            steering_angle = steering_angles[index]
+        slice_begin = training_data_slice * fourth_batch_size
+        slice_end = slice_begin + fourth_batch_size
 
-            image = utils.preprocess(image)
+        # original frames
+        orig_images = [utils.preprocess(cv2.imread(path)) for path in image_paths[slice_begin:slice_end]]
+        orig_steers = steering_angles[slice_begin:slice_end]
 
-            # add the image and steering angle to the batch
-            images[i] = image
-            steers[i] = steering_angle
+        # original frames mirrored
+        orig_flip_images = [cv2.flip(x, 1) for x in orig_images]
+        orig_flip_steers = [-x for x in orig_steers]
 
-            # add flipped the image and steering angle to the batch
-            images[i+1] = cv2.flip(image, 1)
-            steers[i+1] = -steering_angle
+        # generated frames
+        gen = datagen.flow(
+            x=np.stack(orig_images, axis=0),
+            y=np.stack(orig_steers, axis=0),
+            batch_size=fourth_batch_size,
+            shuffle=False)
+        gen_images, gen_steers = next(gen)
+
+        # generated frames mirrored
+        gen_flip_images = [cv2.flip(x, 1) for x in gen_images]
+        gen_flip_steers = [-x for x in gen_steers]
+
+        images = np.concatenate((orig_images, orig_flip_images, gen_images, gen_flip_images), axis=0)
+        steers = np.concatenate((orig_steers, orig_flip_steers, gen_steers, gen_flip_steers), axis=0)
+
         yield images, steers
+        training_data_slice = (training_data_slice + 1) % slices_per_epoch
 
 
 def validation_generator(image_paths, steering_angles, batch_size):
     """
     Generate cross validation data.
     """
-    images = np.empty([batch_size, utils.IMAGE_HEIGHT, utils.IMAGE_WIDTH, utils.IMAGE_CHANNELS])
-    steers = np.empty(batch_size)
     while True:
-        for i in range(batch_size):
-            index = np.random.choice(len(image_paths))
-            image = cv2.imread(image_paths[index])
-            steering_angle = steering_angles[index]
-
-            images[i] = utils.preprocess(image)
-            steers[i] = steering_angle
+        indices = [np.random.choice(len(image_paths)) for x in range(batch_size)]
+        images = [utils.preprocess(cv2.imread(image_paths[i])) for i in indices]
+        steers = [steering_angles[i] for i in indices]
         yield images, steers
+
+
+def load_validation_data(image_paths, steering_angles):
+    """
+    Load validation frames into memory.
+    """
+    images = [utils.preprocess(cv2.imread(x)) for x in image_paths]
+    return np.array(images), np.array(steering_angles)
 
 
 def read_datapoint(path):
@@ -85,7 +112,7 @@ def load_data(data_dir, test_size):
             X.append(img_path)
             y.append(steering)
 
-    return sklearn.model_selection.train_test_split(X, y, test_size=test_size, random_state=0)
+    return sklearn.model_selection.train_test_split(X, y, test_size=test_size, random_state=None)
 
 
 def build_model():
@@ -94,11 +121,11 @@ def build_model():
     """
     model = keras.models.Sequential()
     model.add(keras.layers.Lambda(lambda x: x/127.5-1.0, input_shape=utils.INPUT_SHAPE))
-    model.add(keras.layers.Conv2D(24, 5, 5, activation='elu', subsample=(2, 2)))
-    model.add(keras.layers.Conv2D(36, 5, 5, activation='elu', subsample=(2, 2)))
-    model.add(keras.layers.Conv2D(48, 5, 5, activation='elu', subsample=(2, 2)))
-    model.add(keras.layers.Conv2D(64, 3, 3, activation='elu'))
-    model.add(keras.layers.Conv2D(64, 3, 3, activation='elu'))
+    model.add(keras.layers.Conv2D(24, kernel_size=5, strides=2, activation='elu'))
+    model.add(keras.layers.Conv2D(36, kernel_size=5, strides=2, activation='elu'))
+    model.add(keras.layers.Conv2D(48, kernel_size=5, strides=2, activation='elu'))
+    model.add(keras.layers.Conv2D(64, kernel_size=3, activation='elu'))
+    model.add(keras.layers.Conv2D(64, kernel_size=3, activation='elu'))
     model.add(keras.layers.Dropout(0.5))
     model.add(keras.layers.Flatten())
     model.add(keras.layers.Dense(100, activation='elu'))
@@ -116,20 +143,28 @@ def train_model(model, epochs, batch_size, X_train, X_valid, y_train, y_valid):
     """
     logging = keras.callbacks.TensorBoard(log_dir='logs')
 
-    checkpoint = keras.callbacks.ModelCheckpoint('model-{epoch:03d}.h5',
+    checkpoint = keras.callbacks.ModelCheckpoint('model-{epoch:03d}-{val_loss:.4f}.h5',
                                                  monitor='val_loss',
-                                                 verbose=0,
-                                                 save_best_only=True,
-                                                 mode='auto')
+                                                 save_best_only=True)
 
-    model.compile(loss='mean_squared_error', optimizer=keras.optimizers.Adam(lr=1.0e-4))
+    model.compile(loss='mean_squared_error',
+                  optimizer=keras.optimizers.Adam(lr=1.0e-4))
+    print('{} model compiled'.format(datetime.datetime.now()))
+
+    # 3/4 of training data per batch is generated; we need 4x steps to get once
+    # through the whole (physical) training set.
+    steps_per_epoch = len(X_train) * 4 // batch_size
+
+    # Pre-loading all validation data in memory speeds up training 10-15%.
+    # Switch back to validation data generator if the data get's too large.
+    X_valid_data, y_valid_data = load_validation_data(X_valid, y_valid)
 
     model.fit_generator(training_generator(X_train, y_train, batch_size),
-                        steps_per_epoch=len(X_train) // batch_size * 2,
+                        steps_per_epoch=steps_per_epoch,
                         epochs=epochs,
-                        max_q_size=1,
-                        validation_data=validation_generator(X_valid, y_valid, batch_size),
-                        validation_steps=len(X_valid),
+                        validation_data=(X_valid_data, y_valid_data),
+                        #validation_data=training_generator(X_valid, y_valid, batch_size),
+                        #validation_steps=len(X_valid) // batch_size,
                         callbacks=[logging, checkpoint],
                         verbose=1)
 
@@ -137,14 +172,15 @@ def train_model(model, epochs, batch_size, X_train, X_valid, y_train, y_valid):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', dest='data_dir',   type=str,   default='data', help='data directory')
-    parser.add_argument('-t', dest='test_size',  type=float, default=0.1,    help='test size fraction')
-    parser.add_argument('-n', dest='epochs',     type=int,   default=10,     help='number of epochs')
-    parser.add_argument('-b', dest='batch_size', type=int,   default=40,     help='batch size')
+    parser.add_argument('-t', dest='test_size',  type=float, default=0.2,    help='test size fraction')
+    parser.add_argument('-n', dest='epochs',     type=int,   default=50,     help='number of epochs')
+    parser.add_argument('-b', dest='batch_size', type=int,   default=64,     help='batch size')
     args = parser.parse_args()
 
     print('{} start'.format(datetime.datetime.now()))
     data = load_data(args.data_dir, args.test_size)
     model = build_model()
+    print('{} model built'.format(datetime.datetime.now()))
     train_model(model, args.epochs, args.batch_size, *data)
     print('{} done'.format(datetime.datetime.now()))
 
