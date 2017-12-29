@@ -103,6 +103,9 @@ ENV/
 # PyCharm
 .idea/
 
+# Visual Studio Code
+.vscode/
+
 # training data
 data/
 
