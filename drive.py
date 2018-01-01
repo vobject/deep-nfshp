@@ -15,12 +15,28 @@ import pyvjoy
 from grabscreen import grab_screen
 
 
+def get_model_preprocessing(name):
+    from models.nvidia import NvidiaModel
+    from models.comma import CommaModel
+    from models.tiny import TinyModel
+
+    if name:
+        # assume NVIDIA model by default
+        preproc = NvidiaModel.preprocess
+        if CommaModel.NAME in name:
+            preproc = CommaModel.preprocess
+        elif TinyModel.NAME in name:
+            preproc = TinyModel.preprocess
+        return preproc
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', dest='model',   type=str, help='trained model file')
+    parser.add_argument('-m', dest='model_filepath',   type=str, help='trained model file')
     args = parser.parse_args()
 
-    model = keras.models.load_model(args.model)
+    model = keras.models.load_model(args.model_filepath)
+    preproc = get_model_preprocessing(args.model_filepath)
 
     MAX_VJOY = 32767
     j = pyvjoy.VJoyDevice(1)
@@ -32,7 +48,7 @@ def main():
         screen = grab_screen(wnd_title=utils.WINDOW_TITLE,
                              dst_size=utils.CAPTURE_SIZE,
                              src_offset=utils.WINDOW_OFFSETS)
-        screen_mod = utils.preprocess(screen)
+        screen_mod = preproc(screen)
 
         # predict the steering angle for the current image
         steering_angle = float(model.predict(np.array([screen_mod]), batch_size=1))
