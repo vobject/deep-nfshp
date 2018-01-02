@@ -118,3 +118,5 @@ logs/
 
 # Windows Shortcut
 *.lnk
+
+tensorboard.bat
