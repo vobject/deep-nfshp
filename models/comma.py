@@ -1,5 +1,4 @@
-from keras.models import Sequential
-from keras.layers import Lambda, Conv2D, Dense, Flatten, Dropout, ELU
+from tensorflow import keras
 
 import cv2
 
@@ -18,18 +17,18 @@ class CommaModel:
 
     def get(self):
         if not self.model:
-            self.model = Sequential()
-            self.model.add(Lambda(lambda x: x/127.5-1.0, input_shape=CommaModel.INPUT_SHAPE, output_shape=CommaModel.INPUT_SHAPE))
-            self.model.add(Conv2D(16, kernel_size=8, strides=4, padding='same', activation='elu'))
-            self.model.add(Conv2D(32, kernel_size=5, strides=2, padding='same', activation='elu'))
-            self.model.add(Conv2D(64, kernel_size=5, strides=2, padding='same'))
-            self.model.add(Flatten())
-            self.model.add(Dropout(0.2))
-            self.model.add(ELU())
-            self.model.add(Dense(512))
-            self.model.add(Dropout(0.5))
-            self.model.add(ELU())
-            self.model.add(Dense(1))
+            self.model = keras.models.Sequential()
+            self.model.add(keras.layers.Lambda(lambda x: x/127.5-1.0, input_shape=CommaModel.INPUT_SHAPE, output_shape=CommaModel.INPUT_SHAPE))
+            self.model.add(keras.layers.Conv2D(16, kernel_size=8, strides=4, padding='same', activation='elu'))
+            self.model.add(keras.layers.Conv2D(32, kernel_size=5, strides=2, padding='same', activation='elu'))
+            self.model.add(keras.layers.Conv2D(64, kernel_size=5, strides=2, padding='same'))
+            self.model.add(keras.layers.Flatten())
+            self.model.add(keras.layers.Dropout(0.2))
+            self.model.add(keras.layers.ELU())
+            self.model.add(keras.layers.Dense(512))
+            self.model.add(keras.layers.Dropout(0.5))
+            self.model.add(keras.layers.ELU())
+            self.model.add(keras.layers.Dense(1))
         return self.model
 
     @staticmethod

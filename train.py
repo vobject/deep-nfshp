@@ -6,9 +6,7 @@ import cv2
 import numpy as np
 import sklearn.model_selection
 
-from keras.optimizers import Adam
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow import keras
 
 from models.nvidia import NvidiaModel
 from models.comma import CommaModel
@@ -21,7 +19,7 @@ def training_generator(image_paths, steering_angles, preproc, batch_size):
     """
     fourth_batch_size = batch_size // 4
     slices_per_epoch = len(image_paths) // batch_size
-    datagen = ImageDataGenerator(
+    datagen = keras.preprocessing.image.ImageDataGenerator(
         rotation_range=10,
         width_shift_range=0.1,
         height_shift_range=0.1,
@@ -133,14 +131,14 @@ def train_model(model, epochs, batch_size, X_train, X_valid, y_train, y_valid):
     """
     Train the model.
     """
-    logging = TensorBoard(log_dir='logs')
+    logging = keras.callbacks.TensorBoard(log_dir='logs')
 
-    checkpoint = ModelCheckpoint('model-' + model.NAME + '-{epoch:03d}-{val_loss:.4f}.h5',
+    checkpoint = keras.callbacks.ModelCheckpoint('model-' + model.NAME + '-{epoch:03d}-{val_loss:.4f}.h5',
                                  monitor='val_loss',
                                  save_best_only=True)
 
     kmodel = model.get()
-    kmodel.compile(loss='mean_squared_error', optimizer=Adam(lr=1.0e-4))
+    kmodel.compile(loss='mean_squared_error', optimizer=keras.optimizers.Adam(lr=1.0e-4))
     print('{} model compiled'.format(datetime.datetime.now()))
 
     # 3/4 of training data per batch is generated; we need 4x steps to get once
@@ -158,6 +156,7 @@ def train_model(model, epochs, batch_size, X_train, X_valid, y_train, y_valid):
         validation_data=(X_valid_data, y_valid_data),
         #validation_data=training_generator(X_valid, y_valid, model.preprocess, batch_size),
         #validation_steps=len(X_valid) // batch_size,
+        #workers=4,
         callbacks=[logging, checkpoint],
         verbose=1)
 

@@ -2,7 +2,7 @@ import argparse
 
 import cv2
 import numpy as np
-import keras.models
+from tensorflow import keras
 
 import utils
 

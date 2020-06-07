@@ -1,5 +1,4 @@
-from keras.models import Sequential
-from keras.layers import Lambda, Conv2D, Dense, Flatten, Dropout, MaxPooling2D
+from tensorflow import keras
 
 import cv2
 import numpy as np
@@ -19,13 +18,13 @@ class TinyModel:
 
     def get(self):
         if not self.model:
-            self.model = Sequential()
-            self.model.add(Lambda(lambda x: x/127.5-1.0, input_shape=TinyModel.INPUT_SHAPE))
-            self.model.add(Conv2D(2, kernel_size=3, padding='valid', activation='elu', input_shape=TinyModel.INPUT_SHAPE))
-            self.model.add(MaxPooling2D(pool_size=4, strides=4, padding='valid'))
-            self.model.add(Dropout(0.25))
-            self.model.add(Flatten())
-            self.model.add(Dense(1))
+            self.model = keras.models.Sequential()
+            self.model.add(keras.layers.Lambda(lambda x: x/127.5-1.0, input_shape=TinyModel.INPUT_SHAPE))
+            self.model.add(keras.layers.Conv2D(2, kernel_size=3, padding='valid', activation='elu', input_shape=TinyModel.INPUT_SHAPE))
+            self.model.add(keras.layers.MaxPooling2D(pool_size=4, strides=4, padding='valid'))
+            self.model.add(keras.layers.Dropout(0.25))
+            self.model.add(keras.layers.Flatten())
+            self.model.add(keras.layers.Dense(1))
         return self.model
 
     @staticmethod

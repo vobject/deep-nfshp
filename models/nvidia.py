@@ -1,5 +1,4 @@
-from keras.models import Sequential
-from keras.layers import Lambda, Conv2D, Dense, Flatten, Dropout
+from tensorflow import keras
 
 import cv2
 
@@ -17,19 +16,19 @@ class NvidiaModel:
 
     def get(self):
         if not self.model:
-            self.model = Sequential()
-            self.model.add(Lambda(lambda x: x/127.5-1.0, input_shape=NvidiaModel.INPUT_SHAPE))
-            self.model.add(Conv2D(24, kernel_size=5, strides=2, activation='elu'))
-            self.model.add(Conv2D(36, kernel_size=5, strides=2, activation='elu'))
-            self.model.add(Conv2D(48, kernel_size=5, strides=2, activation='elu'))
-            self.model.add(Conv2D(64, kernel_size=3, activation='elu'))
-            self.model.add(Conv2D(64, kernel_size=3, activation='elu'))
-            self.model.add(Dropout(0.5))
-            self.model.add(Flatten())
-            self.model.add(Dense(100, activation='elu'))
-            self.model.add(Dense(50, activation='elu'))
-            self.model.add(Dense(10, activation='elu'))
-            self.model.add(Dense(1))
+            self.model = keras.models.Sequential()
+            self.model.add(keras.layers.Lambda(lambda x: x/127.5-1.0, input_shape=NvidiaModel.INPUT_SHAPE))
+            self.model.add(keras.layers.Conv2D(24, kernel_size=5, strides=2, activation='elu'))
+            self.model.add(keras.layers.Conv2D(36, kernel_size=5, strides=2, activation='elu'))
+            self.model.add(keras.layers.Conv2D(48, kernel_size=5, strides=2, activation='elu'))
+            self.model.add(keras.layers.Conv2D(64, kernel_size=3, activation='elu'))
+            self.model.add(keras.layers.Conv2D(64, kernel_size=3, activation='elu'))
+            self.model.add(keras.layers.Dropout(0.5))
+            self.model.add(keras.layers.Flatten())
+            self.model.add(keras.layers.Dense(100, activation='elu'))
+            self.model.add(keras.layers.Dense(50, activation='elu'))
+            self.model.add(keras.layers.Dense(10, activation='elu'))
+            self.model.add(keras.layers.Dense(1))
         return self.model
 
     @staticmethod
