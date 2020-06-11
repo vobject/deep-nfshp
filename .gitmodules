@@ -4,3 +4,6 @@
 [submodule "external/Detours"]
 	path = external/Detours
 	url = https://github.com/microsoft/Detours.git
+[submodule "external/tinyformat"]
+	path = external/tinyformat
+	url = https://github.com/c42f/tinyformat.git
