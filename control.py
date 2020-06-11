@@ -178,10 +178,23 @@ def move_mouse(x: int, y: int):
         pass
 
 
+def click_mouse(btn: str="lb", wait_time: float=.25):
+    logging.warning(f"click_mouse(btn={btn})")
+    try:
+        requests.post("http://localhost:8080/mouse", data="action=lb", timeout=0.001)
+    except:
+        pass
+
+
 def set_cursor(x: int, y: int, wait_time: float=.25):
     move_mouse(-8192, -8192)
     time.sleep(wait_time)
     move_mouse(x, y)
+    time.sleep(wait_time)
+
+
+def press_mouse(wait_time: float=.25):
+    click_mouse()
     time.sleep(wait_time)
 
 
@@ -196,23 +209,23 @@ def press_key(wnd, key: int, wait_time: float=.25):
 MENU_TRANSITION_OPS = {
     "main_to_setup": lambda wnd: (
         set_cursor(60, 195),
-        press_key(wnd, "enter"),
+        press_mouse(),
         set_cursor(310, 195),
-        press_key(wnd, "enter"),
+        press_mouse(),
         time.sleep(1.),
     ),
     "main_to_race": lambda wnd: (
         set_cursor(60, 195),
-        press_key(wnd, "enter"),
+        press_mouse(),
         set_cursor(310, 195),
-        press_key(wnd, "enter"),
+        press_mouse(),
         MENU_TRANSITION_OPS["setup_to_race"](wnd),
     ),
     "main_to_exit": lambda wnd: (
         set_cursor(60, 195),
         press_key(wnd, "esc"),
         set_cursor(290, 255),
-        press_key(wnd, "enter"),
+        press_mouse(),
         time.sleep(1.),
     ),
 
@@ -221,11 +234,8 @@ MENU_TRANSITION_OPS = {
         time.sleep(1.),
     ),
     "setup_to_race": lambda wnd: (
-        # press_key(wnd, "up_arrow"),
-        # press_key(wnd, "up_arrow"),
-        # press_key(wnd, "up_arrow"),
         set_cursor(350, 450),
-        press_key(wnd, "enter"),
+        press_mouse(),
         time.sleep(4.),
 
         win32com.client.Dispatch("WScript.Shell").AppActivate("Need For Speed III: Hot Pursuit"),
@@ -238,20 +248,11 @@ MENU_TRANSITION_OPS = {
     "race_to_setup": lambda wnd: (
         press_key(wnd, "esc"),
         set_cursor(900, 720),
-        press_key(wnd, "enter"),
+        press_mouse(),
         set_cursor(500, 340),
-        press_key(wnd, "enter"),
+        press_mouse(),
         set_cursor(480, 410),
-        press_key(wnd, "enter"),
-
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "enter"),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "enter"),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "enter"),
+        press_mouse(),
         time.sleep(2.),
     ),
     "race_to_main": lambda wnd: (
@@ -261,19 +262,11 @@ MENU_TRANSITION_OPS = {
     "race_to_exit": lambda wnd: (
         press_key(wnd, "esc"),
         set_cursor(900, 720),
-        press_key(wnd, "enter"),
+        press_mouse(),
         set_cursor(500, 430),
-        press_key(wnd, "enter"),
+        press_mouse(),
         set_cursor(450, 410),
-        press_key(wnd, "enter"),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "enter"),
-        # press_key(wnd, "up_arrow"),
-        # press_key(wnd, "enter"),
-        # press_key(wnd, "tab", .5),
-        # press_key(wnd, "enter"),
+        press_mouse(),
     ),
 }
 
