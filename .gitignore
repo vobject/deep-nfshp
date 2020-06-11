@@ -119,4 +119,10 @@ logs/
 # Windows Shortcut
 *.lnk
 
+# Visual Studio
+.vs
+*.user
+*.sln
+dinput_proxy/Release/
+
 tensorboard.bat
