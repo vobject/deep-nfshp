@@ -1,0 +1,6 @@
+[submodule "external/EmbeddableWebServer"]
+	path = external/EmbeddableWebServer
+	url = https://github.com/hellerf/EmbeddableWebServer.git
+[submodule "external/Detours"]
+	path = external/Detours
+	url = https://github.com/microsoft/Detours.git
